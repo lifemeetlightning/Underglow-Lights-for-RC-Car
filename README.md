@@ -1,6 +1,6 @@
 # Underglow Lights for RC Car
 
-This project contains the code from my "LED Lights for RC Car" YouTube videos. https://www.youtube.com/watch?v=ARAg_Y2TWjk
+This project contains the code from my "LED Lights for RC Car" YouTube videos: https://www.youtube.com/playlist?list=PL96jbsz35-llmwog3LWJorAzYf_Qm90JE
 
 ## Overview
 
