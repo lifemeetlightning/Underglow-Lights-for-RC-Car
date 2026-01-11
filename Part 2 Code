@@ -1,0 +1,212 @@
+#include <FastLED.h>
+#define NUM_LEDS 57
+#define DATA_PIN 2
+#define COLOR_ORDER GRB
+#define CHIPSET WS2812B
+#define BRIGHTNESS 60
+#define BUTTON_PIN 3
+#define VOLTS 5
+#define MAX_AMPS 500
+#define TOGGLE_VALUE 13
+
+
+bool button = LOW;
+int toggle = 0;
+bool buttonState = HIGH;
+bool lastButtonState = LOW;
+CRGB leds[NUM_LEDS];
+
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 70;
+
+void setup() {
+
+delay(3000);
+FastLED.addLeds<CHIPSET, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+FastLED.setMaxPowerInVoltsAndMilliamps(VOLTS, MAX_AMPS);
+FastLED.setBrightness(BRIGHTNESS);
+FastLED.clear();
+FastLED.show();
+
+pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+if (toggle == 0) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Green;
+} 
+FastLED.show();
+delay(20);
+}
+
+}
+
+void loop() {
+
+checkButton();
+
+if (buttonState == LOW) {
+
+if (toggle == 0) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Green;
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 1) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Aqua;
+}
+FastLED.show();
+delay(20); 
+}
+if (toggle == 2) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Red;
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 3) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Yellow;
+}
+FastLED.show();
+delay(20); 
+}
+if (toggle == 4) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Orange;
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 5) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Purple;
+}
+FastLED.show();
+delay(20); 
+}
+if (toggle == 6) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::MidnightBlue;
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 7) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::LightSteelBlue;
+}
+FastLED.show();
+delay(20); 
+}
+if (toggle == 8) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::LightSkyBlue;
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 9) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::FireBrick;
+}
+FastLED.show();
+delay(20); 
+}
+if (toggle == 10) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Amethyst;
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 11) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Gainsboro;
+}
+FastLED.show();
+delay(20); 
+}
+if (toggle == 12) {
+delay(500);
+bool flag = true;
+while (flag == true) {
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB(0, (255 - 4*i), (4*i));
+FastLED.show();
+if (digitalRead(BUTTON_PIN) != HIGH){
+checkButton();
+flag = false;
+toggle = 13;
+break;
+}
+delay(10);
+}
+for (int i=NUM_LEDS; i>=0; i--){
+leds[i] = CRGB((4*i),0 , (255-4*i));
+FastLED.show();
+if (digitalRead(BUTTON_PIN) != HIGH){
+checkButton();
+flag = false;
+toggle = 13;
+break;
+}
+delay(10);
+} 
+}
+}
+if (toggle >= 13) {
+FastLED.clear();
+FastLED.show(); 
+} 
+}
+
+}
+
+//--------------------------FUNCTIONS-----------------------------------//
+
+void checkButton() {
+
+button = digitalRead(BUTTON_PIN);
+debounce();
+
+}
+
+
+
+
+void debounce () {
+
+if (button != lastButtonState) {
+lastDebounceTime = millis(); 
+}
+if ((millis() - lastDebounceTime) > debounceDelay) {
+
+if (button != buttonState) {
+buttonState = button;
+if (buttonState == LOW) {
+setToggle();
+}
+}
+}
+
+lastButtonState = button;
+
+}
+
+
+
+
+void setToggle() {
+
+if (toggle < TOGGLE_VALUE){
+toggle++;
+} 
+if (toggle >= TOGGLE_VALUE) {
+toggle = 0;
+} 
+
+}
