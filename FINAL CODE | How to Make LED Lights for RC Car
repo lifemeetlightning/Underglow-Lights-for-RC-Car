@@ -1,0 +1,1138 @@
+/*
+* Life Meet Lightning
+* YouTube.com/LifeMeetLightning
+*
+* LED Lights for RC Car!!!
+* Check out the tutorial:
+* https://youtu.be/V3T_6zTsutA
+*
+* Operates in three modes:
+* Tilt switch, pattern, and solid colors.
+*
+* If you're new to Arduino or installing and working
+* with the FastLED library, I have a great tutorial.
+* Check it out here:
+* https://youtu.be/DKXi1491et8
+*/
+
+#include <FastLED.h> //Install the FastLED library!
+#define NUM_LEDS 57 //Adjust according to how many pixels you are using on your light strip.
+#define DATA_PIN 2 //This is the hardware pin on the Arduino Nano the light strip data line is attached to.
+#define COLOR_ORDER GRB //ws2812b light strip uses the order 'GRB'.
+#define CHIPSET WS2812B //The light strip this project uses.
+#define BRIGHTNESS 90 //The MAX_AMPS value takes precedent over this value, so even if this is set all the way up to 255, it will only get as bright as the MAX_AMPS value will allow it to get.
+#define BUTTON_PIN 3 //The Arduino pin the 'Select' button uses. Cycles through patterns and colors.
+#define BUTTON_PIN_2 4 //The Arduino pin the 'Mode' button uses. Cycles through the three modes.
+#define TILT_SWITCH 6 //The Arduino pin the tilt switch uses for tilt switch mode. Button and tilt pins use the internal pull-up resistor built into the Arduino board.
+#define VOLTS 5 //The voltage setting for the ws2812b light strip.
+#define MAX_AMPS 500 //Limits the current the light strip draws. If you raise this value above 500, unplug the lights when reprogramming or plugging into USB port unless you know whatever port you are using can supply more than 500mA. The 7805 external regulator used in this project can handle up to 1.5 Amps (1500mA). Don't exceed this value.
+#define TOGGLE_VALUE 13 //Constants that the 'toggle', 'toggle_2', and 'tilt_toggle' variables compare against in the setToggle() functions.
+#define TOGGLE_VALUE_2 3
+#define TILT_DELAY 500 //This is a delay in milliseconds implemented after the tilt switch changes light colors in tilt switch mode. It's a crude attempt at fixing the 'glitch' that happens where the lights freeze up in the mode 3 tilt switch operation.
+#define PATTERN_DELAY_1 10 //Delays used in the patterns in pattern mode.
+#define PATTERN_DELAY_2 10
+#define PATTERN_DELAY_3 20
+//#define COLOR_TEMP Tungsten100W
+//#define COLOR_TEMP CarbonArc
+//#define COLOR_TEMP MercuryVapor
+#define COLOR_TEMP TypicalLEDStrip //Color temperature settings. Modifies the intensities of the red, green, and blue values in the FastLED library. Complete list of color correction keywords included at bottom of sketch.
+
+//Change mode 1 and mode 3 colors here! Complete list of colors included at bottom of sketch. Custom colors may also be set in the format: "CRGB(50,150,255)" where 50=amount of red, 150=amount of green, and 255=amount of blue. Values range from 0 to 255.
+CRGB colors[12] = {
+CRGB::Green,
+CRGB::Aqua,
+CRGB::Blue,
+CRGB::DarkViolet,
+CRGB::DarkOrange,
+CRGB::Magenta,
+CRGB::WhiteSmoke,
+CRGB::Red,
+CRGB::SeaGreen,
+CRGB::Yellow,
+CRGB::PowderBlue,
+CRGB::Purple
+};
+
+//Variable declarations
+bool button = LOW;
+bool button_2 = LOW;
+bool tilt = LOW;
+int toggle = 0;
+int toggle_2 = 0;
+int tilt_toggle = 0;
+bool buttonState = HIGH;
+bool buttonState_2 = HIGH;
+bool tiltState = HIGH;
+bool lastButtonState = LOW;
+bool lastButtonState_2 = LOW;
+bool lastTiltState = LOW;
+CRGB leds[NUM_LEDS];
+
+//Variables for buttun debounce function.
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 70;
+
+void setup() {
+
+delay(3000);
+FastLED.addLeds<CHIPSET, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+FastLED.setMaxPowerInVoltsAndMilliamps(VOLTS, MAX_AMPS);
+FastLED.setBrightness(BRIGHTNESS);
+FastLED.setTemperature(COLOR_TEMP);
+FastLED.clear();
+FastLED.show();
+
+pinMode(BUTTON_PIN, INPUT_PULLUP);
+pinMode(BUTTON_PIN_2, INPUT_PULLUP);
+pinMode(TILT_SWITCH, INPUT_PULLUP);
+
+defaultColor();
+
+}
+
+void loop() {
+
+checkButton();
+
+//---- MODE 1: TILT SWITCH
+
+if (toggle_2 == 0) {
+
+if (tiltState == HIGH) {
+
+if (tilt_toggle == 0) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[0];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle == 1) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[1];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle == 2) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[2];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle == 3) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[3];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle == 4) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[4];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle == 5) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[5];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle == 6) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[6];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle == 7) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[7];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle == 8) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[8];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle == 9) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[9];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle == 10) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[10];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle == 11) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[11];
+}
+FastLED.show();
+delay(TILT_DELAY);
+}
+if (tilt_toggle >= 12) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[0];
+}
+FastLED.show();
+delay(TILT_DELAY);
+tilt_toggle = 0;
+}
+
+}
+}
+
+//---- MODE 2: Patterns
+
+if (toggle_2 == 1) {
+
+if (buttonState == LOW || buttonState_2 == LOW) {
+
+//---- First Pattern
+if (toggle == 0) {
+delay(500);
+bool flag = true;
+
+while (flag == true) {
+for (int i=50; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Blue;
+}
+FastLED.show();
+delay(10);
+for (int i=0; i<49; i++){
+leds[i] = CRGB(0, (255 - 4*i), (4*i)); //The FastLED library doesn't like these math functions. I had to set toggle_2 and toggle to the values I want them to be after the math because this math was somehow changing their values.
+FastLED.show();
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 1;
+toggle_2 = 1;
+break;
+}
+delay(PATTERN_DELAY_1);
+}
+for (int i=50; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Orange;
+}
+FastLED.show();
+delay(10);
+for (int i=49; i>=0; i--){
+leds[i] = CRGB((4*i),0 , (255-4*i));
+FastLED.show();
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 1;
+toggle_2 = 1;
+break;
+}
+delay(PATTERN_DELAY_1);
+}
+}
+}
+
+//----Second Pattern
+if (toggle == 1) {
+delay(500);
+bool flag = true;
+while (flag == true) {
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Blue;
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 2;
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_2);
+}
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Red;
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 2;
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_2);
+}
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Green;
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 2;
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_2);
+}
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Orange;
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 2;
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_2);
+}
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Purple;
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 2;
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_2);
+}
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Yellow;
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 2;
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_2);
+
+}
+}
+}
+
+//----Third Pattern
+if (toggle == 2) {
+delay(500); //This delay is important as I'm not using the debounce for the patterns.
+bool flag = true;
+while (flag == true) {
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Green;
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+break;
+}
+}
+for (int i=0; i<BRIGHTNESS; i++){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+for (int i=BRIGHTNESS; i>=0; i--){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Blue;
+FastLED.show();
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+break;
+}
+}
+for (int i=0; i<BRIGHTNESS; i++){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+for (int i=BRIGHTNESS; i>=0; i--){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Purple;
+FastLED.show();
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+break;
+}
+}
+for (int i=0; i<BRIGHTNESS; i++){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+for (int i=BRIGHTNESS; i>=0; i--){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Red;
+FastLED.show();
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+break;
+}
+}
+for (int i=0; i<BRIGHTNESS; i++){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+for (int i=BRIGHTNESS; i>=0; i--){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Orange;
+FastLED.show();
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+break;
+}
+}
+for (int i=0; i<BRIGHTNESS; i++){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+for (int i=BRIGHTNESS; i>=0; i--){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+
+for (int i=0; i<NUM_LEDS; i++){
+leds[i] = CRGB::Yellow;
+FastLED.show();
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+break;
+}
+}
+for (int i=0; i<BRIGHTNESS; i++){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+for (int i=BRIGHTNESS; i>=0; i--){
+FastLED.setBrightness(i);
+if (digitalRead(BUTTON_PIN_2) != HIGH){
+flag = false;
+toggle_2 = 2;
+toggle = 0;
+FastLED.setBrightness(BRIGHTNESS);
+defaultColor();
+
+break;
+}
+if (digitalRead(BUTTON_PIN) != HIGH){
+flag = false;
+toggle = 0;
+toggle_2 = 1;
+FastLED.setBrightness(BRIGHTNESS);
+break;
+}
+FastLED.show();
+delay(PATTERN_DELAY_3);
+}
+
+}
+}
+}
+}
+
+//---- MODE 3: SELECT COLOR
+
+if (toggle_2 == 2) {
+
+if (buttonState == LOW) {
+
+if (toggle == 0) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[0];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 1) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[1];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 2) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[2];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 3) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[3];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 4) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[4];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 5) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[5];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 6) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[6];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 7) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[7];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 8) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[8];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 9) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[9];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 10) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[10];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle == 11) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[11];
+}
+FastLED.show();
+delay(20);
+}
+if (toggle >= 12) {
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[0];
+}
+FastLED.show();
+delay(20);
+toggle = 0;
+}
+}
+}
+
+}
+
+//--------------------------FUNCTIONS-----------------------------------//
+
+void checkButton() {
+
+button = digitalRead(BUTTON_PIN);
+button_2 = digitalRead(BUTTON_PIN_2);
+tilt = digitalRead(TILT_SWITCH);
+debounce();
+
+}
+
+void setToggle() {
+
+if (toggle < TOGGLE_VALUE){
+toggle++;
+}
+if (toggle >= TOGGLE_VALUE) {
+toggle = 0;
+}
+}
+
+void setToggle2() {
+
+toggle = 0;
+
+if (toggle_2 < TOGGLE_VALUE_2){
+toggle_2++;
+}
+if (toggle_2 >= TOGGLE_VALUE_2) {
+toggle_2 = 0;
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = CRGB::Green;
+}
+FastLED.show();
+delay(20);
+toggle = 0;
+tilt_toggle = 0;
+}
+}
+
+void setTiltToggle() {
+
+if (tilt_toggle < TOGGLE_VALUE){
+tilt_toggle++;
+}
+if (tilt_toggle >= TOGGLE_VALUE) {
+tilt_toggle = 0;
+}
+}
+
+
+
+
+void debounce() {
+
+//This can be consolidated to run more efficiently
+
+if (button != lastButtonState) {
+lastDebounceTime = millis();
+}
+
+if ((millis() - lastDebounceTime) > debounceDelay) {
+
+if (button != buttonState) {
+buttonState = button;
+if (buttonState == LOW) {
+setToggle();
+}
+}
+}
+
+lastButtonState = button;
+
+if (button_2 != lastButtonState_2) {
+lastDebounceTime = millis();
+}
+
+if ((millis() - lastDebounceTime) > debounceDelay) {
+
+if (button_2 != buttonState_2) {
+buttonState_2 = button_2;
+if (buttonState_2 == LOW) {
+setToggle2();
+}
+}
+}
+
+lastButtonState_2 = button_2;
+
+if (toggle_2 == 0) {
+if (tilt != lastTiltState) {
+lastDebounceTime = millis();
+}
+
+if ((millis() - lastDebounceTime) > debounceDelay) {
+
+if (tilt != tiltState) {
+tiltState = tilt;
+if (tiltState == HIGH) {
+setTiltToggle();
+}
+}
+}
+
+lastTiltState = tilt;
+}
+
+}
+
+void defaultColor() {
+
+for (int i=0; i<NUM_LEDS; i++) {
+leds[i] = colors[0];
+}
+FastLED.show();
+delay(20);
+
+}
+
+/* LIST OF COLOR KEYWORDS
+CRGB::AliceBlue
+CRGB::Amethyst
+CRGB::AntiqueWhite
+CRGB::Aqua
+CRGB::Aquamarine
+CRGB::Azure
+CRGB::Beige
+CRGB::Bisque
+CRGB::Black
+CRGB::BlanchedAlmond
+CRGB::Blue
+CRGB::BlueViolet
+CRGB::Brown
+CRGB::BurlyWood
+CRGB::CadetBlue
+CRGB::Chartreuse
+CRGB::Chocolate
+CRGB::Coral
+CRGB::CornflowerBlue
+CRGB::Cornsilk
+CRGB::Crimson
+CRGB::Cyan
+CRGB::DarkBlue
+CRGB::DarkCyan
+CRGB::DarkGoldenrod
+CRGB::DarkGray
+CRGB::DarkGreen
+CRGB::DarkKhaki
+CRGB::DarkMagenta
+CRGB::DarkOliveGreen
+CRGB::DarkOrange
+CRGB::DarkOrchid
+CRGB::DarkRed
+CRGB::DarkSalmon
+CRGB::DarkSeaGreen
+CRGB::DarkSlateBlue
+CRGB::DarkSlateGray
+CRGB::DarkTurquoise
+CRGB::DarkViolet
+CRGB::DeepPink
+CRGB::DeepSkyBlue
+CRGB::DimGray
+CRGB::DodgerBlue
+CRGB::FireBrick
+CRGB::FloralWhite
+CRGB::ForestGreen
+CRGB::Fuchsia
+CRGB::Gainsboro
+CRGB::GhostWhite
+CRGB::Gold
+CRGB::Goldenrod
+CRGB::Gray
+CRGB::Green
+CRGB::GreenYellow
+CRGB::Honeydew
+CRGB::HotPink
+CRGB::IndianRed
+CRGB::Indigo
+CRGB::Ivory
+CRGB::Khaki
+CRGB::Lavender
+CRGB::LavenderBlush
+CRGB::LawnGreen
+CRGB::LemonChiffon
+CRGB::LightBlue
+CRGB::LightCoral
+CRGB::LightCyan
+CRGB::LightGoldenrodYellow
+CRGB::LightGreen
+CRGB::LightGrey
+CRGB::LightPink
+CRGB::LightSalmon
+CRGB::LightSeaGreen
+CRGB::LightSkyBlue
+CRGB::LightSlateGray
+CRGB::LightSteelBlue
+CRGB::LightYellow
+CRGB::Lime
+CRGB::LimeGreen
+CRGB::Linen
+CRGB::Magenta
+CRGB::Maroon
+CRGB::MediumAquamarine
+CRGB::MediumBlue
+CRGB::MediumOrchid
+CRGB::MediumPurple
+CRGB::MediumSeaGreen
+CRGB::MediumSlateBlue
+CRGB::MediumSpringGreen
+CRGB::MediumTurquoise
+CRGB::MediumVioletRed
+CRGB::MidnightBlue
+CRGB::MintCream
+CRGB::MistyRose
+CRGB::Moccasin
+CRGB::NavajoWhite
+CRGB::Navy
+CRGB::OldLace
+CRGB::Olive
+CRGB::OliveDrab
+CRGB::Orange
+CRGB::OrangeRed
+CRGB::Orchid
+CRGB::PaleGoldenrod
+CRGB::PaleGreen
+CRGB::PaleTurquoise
+CRGB::PaleVioletRed
+CRGB::PapayaWhip
+CRGB::PeachPuff
+CRGB::Peru
+CRGB::Pink
+CRGB::Plaid
+CRGB::Plum
+CRGB::PowderBlue
+CRGB::Purple
+CRGB::Red
+CRGB::RosyBrown
+CRGB::RoyalBlue
+CRGB::SaddleBrown
+CRGB::Salmon
+CRGB::SandyBrown
+CRGB::SeaGreen
+CRGB::Seashell
+CRGB::Sienna
+CRGB::Silver
+CRGB::SkyBlue
+CRGB::SlateBlue
+CRGB::SlateGray
+CRGB::Snow
+CRGB::SpringGreen
+CRGB::SteelBlue
+CRGB::Tan
+CRGB::Teal
+CRGB::Thistle
+CRGB::Tomato
+CRGB::Turquoise
+CRGB::Violet
+CRGB::Wheat
+CRGB::White
+CRGB::WhiteSmoke
+CRGB::Yellow
+CRGB::YellowGreen
+*/
+
+/* COLOR CORRECTION VALUES (COLOR_TEMP)
+TypicalSMD5050
+TypicalLEDStrip
+Typical8mmPixel
+TypicalPixelString
+UncorrectedColor
+Candle
+Tungsten40W
+Tungsten100W
+Halogen
+CarbonArc
+HighNoonSun
+DirectSunlight
+OvercastSky
+ClearBlueSky
+WarmFluorescent
+StandardFluorescent
+CoolWhiteFluorescent
+FullSpectrumFluorescent
+GrowLightFluorescent
+BlackLightFluorescent
+MercuryVapor
+SodiumVapor
+MetalHalide
+HighPressureSodium
+UncorrectedTemperature
+*/
